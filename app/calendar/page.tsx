@@ -16,8 +16,9 @@ import {
     CarouselItem,
     CarouselNext,
     CarouselPrevious,
-  } from "@/components/ui/carousel"
-  
+} from "@/components/ui/carousel"
+import { Button } from "@/components/ui/button"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
 export default function Home() {
     const [date, setDate] = useState<Date | undefined>(new Date())
@@ -30,6 +31,15 @@ export default function Home() {
                 onSelect={setDate}
                 className="rounded-md border"
             />
+
+            <Popover>
+                <PopoverTrigger asChild>
+                    <Button variant="outline">Open popover</Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80">
+                    <p>Hello</p>
+                </PopoverContent>
+            </Popover>
 
             <Card className="w-[350px]">
                 <CardHeader>
