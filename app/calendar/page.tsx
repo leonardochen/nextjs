@@ -10,6 +10,14 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
+import {
+    Carousel,
+    CarouselContent,
+    CarouselItem,
+    CarouselNext,
+    CarouselPrevious,
+  } from "@/components/ui/carousel"
+  
 
 export default function Home() {
     const [date, setDate] = useState<Date | undefined>(new Date())
@@ -23,7 +31,7 @@ export default function Home() {
                 className="rounded-md border"
             />
 
-            <Card className="w-[350px] mt-[50px]">
+            <Card className="w-[350px]">
                 <CardHeader>
                     <CardTitle>Card Title</CardTitle>
                     <CardDescription>Card Description</CardDescription>
@@ -35,6 +43,16 @@ export default function Home() {
                     <p>Card Footer</p>
                 </CardFooter>
             </Card>
+
+            <Carousel>
+                <CarouselContent className="w-[400px] h-[400px]">
+                    <CarouselItem>...</CarouselItem>
+                    <CarouselItem>...</CarouselItem>
+                    <CarouselItem>...</CarouselItem>
+                </CarouselContent>
+                <CarouselPrevious />
+                <CarouselNext />
+            </Carousel>
 
         </main>
     );
