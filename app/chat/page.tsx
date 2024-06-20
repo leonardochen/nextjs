@@ -1,0 +1,30 @@
+'use client';
+
+import { useChat } from '@ai-sdk/react';
+
+export default function Page() {
+  const { messages, input, handleInputChange, handleSubmit } = useChat({
+    api: 'api/chat',
+  });
+
+  return (
+    <>
+      {messages.map(message => (
+        <div key={message.id}>
+          {message.role === 'user' ? 'User: ' : 'AI: '}
+          {message.content}
+        </div>
+      ))}
+      <form onSubmit={handleSubmit}>
+        <input
+          name="prompt"
+          value={input}
+          onChange={handleInputChange}
+          id="input"
+          className='border border-gray-300 rounded-lg p-2 w-full'
+        />
+        <button type="submit" className='btn btn-primary'>Submit</button>
+      </form>
+    </>
+  );
+}
