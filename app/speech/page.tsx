@@ -1,3 +1,5 @@
+// Original demo
+
 "use client";
 
 // Import necessary modules and components
@@ -23,10 +25,17 @@ export default function MicrophoneComponent() {
   // Function to start recording
   const startRecording = () => {
     setIsRecording(true);
+
+    if (recognitionRef.current) {
+      console.log("Recording already exists");
+    }
+
     // Create a new SpeechRecognition instance and configure it
     recognitionRef.current = new window.webkitSpeechRecognition();
+    recognitionRef.current.lang = "en-US";
     recognitionRef.current.continuous = true;
     recognitionRef.current.interimResults = true;
+    console.log("Speech recognition instance created");
 
     // Event handler for speech recognition results
     recognitionRef.current.onresult = (event: any) => {
@@ -37,17 +46,37 @@ export default function MicrophoneComponent() {
       setTranscript(transcript);
     };
 
+    recognitionRef.current.onstart = function() { console.log("onstart"); };
+    recognitionRef.current.onresult = function() { console.log("onresult"); };
+    recognitionRef.current.onerror = function() { console.log("onerror"); };
+    recognitionRef.current.addEventListener("audioend", () => { console.log("audioend") });
+    recognitionRef.current.addEventListener("audiostart", () => {console.log("audiostart")});
+    recognitionRef.current.addEventListener("end", () => {console.log("end")});
+    recognitionRef.current.addEventListener("error", (e:any) => {console.log("error"+e.error+e.message)});
+    recognitionRef.current.addEventListener("nomatch", () => {console.log("nomatch")});
+    recognitionRef.current.addEventListener("result", (e:any) => {console.log("result: "+e.results[(e.results.length-1)][0].transcript)});
+    recognitionRef.current.addEventListener("soundend", () => {console.log("soundend")});
+    recognitionRef.current.addEventListener("soundstart", () => {console.log("soundstart")});
+    recognitionRef.current.addEventListener("speechend", () => {console.log("speechend")});
+    recognitionRef.current.addEventListener("speechstart", () => {console.log("speechstart")});
+    recognitionRef.current.addEventListener("start", () => {console.log("start")});
+
+
     // Start the speech recognition
     recognitionRef.current.start();
+    console.log("Recording started");
   };
 
   // Cleanup effect when the component unmounts
   useEffect(() => {
+    console.log("Component mounted");
     return () => {
       // Stop the speech recognition if it's active
       if (recognitionRef.current) {
         recognitionRef.current.stop();
+        console.log("Recording stopped");
       }
+      console.log("Component unmounted");
     };
   }, []);
 
@@ -56,12 +85,14 @@ export default function MicrophoneComponent() {
     if (recognitionRef.current) {
       // Stop the speech recognition and mark recording as complete
       recognitionRef.current.stop();
+      console.log("Recording stopped");
       setRecordingComplete(true);
     }
   };
 
   // Toggle recording state and manage recording actions
   const handleToggleRecording = () => {
+    console.log("Recording toggled");
     setIsRecording(!isRecording);
     if (!isRecording) {
       startRecording();
