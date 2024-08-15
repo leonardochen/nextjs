@@ -1,9 +1,20 @@
-// Original demo
+// Integrate Deepgram
 
 "use client";
 
 // Import necessary modules and components
 import { useEffect, useState, useRef } from "react";
+import {
+    LiveConnectionState,
+    LiveTranscriptionEvent,
+    LiveTranscriptionEvents,
+    useDeepgram,
+} from "@/app/components/DeepgramContextProvider";
+import {
+    MicrophoneEvents,
+    MicrophoneState,
+    useMicrophone,
+} from "@/app/components/MicrophoneContextProvider";
 
 // Declare a global interface to add the webkitSpeechRecognition property to the Window object
 declare global {
@@ -21,6 +32,112 @@ export default function MicrophoneComponent() {
 
   // Reference to store the SpeechRecognition instance
   const recognitionRef = useRef<any>(null);
+
+
+  const { connection, connectToDeepgram, connectionState } = useDeepgram();
+  const { setupMicrophone, microphone, startMicrophone, microphoneState } = useMicrophone();
+  const captionTimeout = useRef<any>();
+  const keepAliveInterval = useRef<any>();
+
+  // Setup
+  useEffect(() => {
+      console.log("Mic setup")
+      setupMicrophone();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+      if (microphoneState === MicrophoneState.Ready) {
+          connectToDeepgram({
+              model: "nova-2",
+              interim_results: true,
+              smart_format: true,
+              filler_words: true,
+              utterance_end_ms: 3000,
+          });
+          console.log("Connected to Deepgram")
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [microphoneState]);
+
+  useEffect(() => {
+      if (!microphone) return;
+      if (!connection) return;
+      if (!isRecording) return;
+
+      const onData = (e: BlobEvent) => {
+          // iOS SAFARI FIX:
+          // Prevent packetZero from being sent. If sent at size 0, the connection will close. 
+          if (e.data.size > 0) {
+              connection?.send(e.data);
+          }
+      };
+
+      const onTranscript = (data: LiveTranscriptionEvent) => {
+          const { is_final: isFinal, speech_final: speechFinal } = data;
+          let thisCaption = data.channel.alternatives[0].transcript;
+
+          console.log("thisCaption", thisCaption);
+          if (thisCaption !== "") {
+              console.log('thisCaption !== ""', thisCaption);
+              setTranscript(thisCaption);
+          }
+
+          if (isFinal && speechFinal) {
+              clearTimeout(captionTimeout.current);
+              captionTimeout.current = setTimeout(() => {
+                  setTranscript("");
+                  clearTimeout(captionTimeout.current);
+              }, 3000);
+          }
+      };
+
+      if (connectionState === LiveConnectionState.OPEN) {
+          connection.addListener(LiveTranscriptionEvents.Transcript, onTranscript);
+          microphone.addEventListener(MicrophoneEvents.DataAvailable, onData);
+
+          startMicrophone();
+      }
+
+      return () => {
+          // prettier-ignore
+          connection.removeListener(LiveTranscriptionEvents.Transcript, onTranscript);
+          microphone.removeEventListener(MicrophoneEvents.DataAvailable, onData);
+          clearTimeout(captionTimeout.current);
+      };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connectionState, isRecording]);
+
+  // Keep alive
+  useEffect(() => {
+      if (!connection) return;
+
+      if (
+          microphoneState !== MicrophoneState.Open &&
+          connectionState === LiveConnectionState.OPEN
+      ) {
+          connection.keepAlive();
+
+          keepAliveInterval.current = setInterval(() => {
+              connection.keepAlive();
+          }, 10000);
+      } else {
+          clearInterval(keepAliveInterval.current);
+      }
+
+      return () => {
+          clearInterval(keepAliveInterval.current);
+      };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [microphoneState, connectionState]);
+
+
+
+
+
+
+
+
 
   // Function to start recording
   const startRecording = () => {
@@ -102,7 +219,7 @@ export default function MicrophoneComponent() {
   };
 
   // Render the microphone component with appropriate UI based on recording state
-  return (
+  return (            
     <div className="flex items-center justify-center h-screen w-full">
       <div className="w-full">
         {(isRecording || transcript) && (
