@@ -1,4 +1,4 @@
-// Requests the microphone upon loading
+// Original demo
 
 "use client";
 
@@ -67,31 +67,9 @@ export default function MicrophoneComponent() {
     console.log("Recording started");
   };
 
-  // Request microphone access and setup the microphone
-  const setupMicrophone = async () => {
-    try {
-      const userMedia = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          noiseSuppression: true,
-          echoCancellation: true,
-        },
-      });
-
-      const microphone = new MediaRecorder(userMedia);
-
-    } catch (err: any) {
-      console.error(err);
-
-      throw err;
-    }
-  };
-
-
   // Cleanup effect when the component unmounts
   useEffect(() => {
     console.log("Component mounted");
-    setupMicrophone();
-    console.log("Mic setup")
     return () => {
       // Stop the speech recognition if it's active
       if (recognitionRef.current) {
